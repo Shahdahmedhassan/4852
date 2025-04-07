@@ -1,0 +1,155 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <cctype>
+
+int charClass;
+std::string lexeme;
+char nextChar;
+int lexLen;
+int token;
+int nextToken;
+std::ifstream in_fp;
+std::string inputString;
+
+void addChar();
+void getChar();
+void getNonBlank();
+int lex();
+void processInput();
+
+#define LETTER 0
+#define DIGIT 1
+#define UNKNOWN 99
+
+#define INT_LIT 10
+#define IDENT 11
+#define ASSIGN_OP 20
+#define ADD_OP 21
+#define SUB_OP 22
+#define MULT_OP 23
+#define DIV_OP 24
+#define LEFT_PAREN 25
+#define RIGHT_PAREN 26
+#define SPACE_TK 30
+#define OTHER_TK 98
+
+int lookup(char ch) {
+    lexeme = ch;
+    switch (ch) {
+    case '(':
+        nextToken = LEFT_PAREN;
+        break;
+    case ')':
+        nextToken = RIGHT_PAREN;
+        break;
+    case '+':
+        nextToken = ADD_OP;
+        break;
+    case '-':
+        nextToken = SUB_OP;
+        break;
+    case '*':
+        nextToken = MULT_OP;
+        break;
+    case '/':
+        nextToken = DIV_OP;
+        break;
+    case ' ':
+    case '\t':
+    case '\n':
+    case '\r':
+        nextToken = SPACE_TK;
+        break;
+    default:
+        if (std::isalpha(ch)) {
+            nextToken = IDENT;
+        } else if (std::isdigit(ch)) {
+            nextToken = INT_LIT;
+        } else {
+            nextToken = OTHER_TK;
+        }
+        break;
+    }
+    return nextToken;
+}
+
+void addChar() {
+    if (lexLen <= 98) {
+        lexeme += nextChar;
+        lexLen++;
+    } else {
+        std::cerr << "Error - lexeme is too long \n";
+    }
+}
+
+void getChar() {
+    if (inputString.length() > 0) {
+        nextChar = inputString[0];
+        inputString.erase(0, 1);
+        if (std::isalpha(nextChar))
+            charClass = LETTER;
+        else if (std::isdigit(nextChar))
+            charClass = DIGIT;
+        else
+            charClass = UNKNOWN;
+    } else {
+        charClass = EOF;
+        nextChar = EOF;
+    }
+}
+
+void getNonBlank() {
+    while (std::isspace(nextChar))
+        getChar();
+}
+
+int lex() {
+    lexLen = 0;
+    lexeme.clear();
+    getNonBlank();
+    switch (charClass) {
+    case LETTER:
+        addChar();
+        getChar();
+        nextToken = IDENT;
+        break;
+    case DIGIT:
+        addChar();
+        getChar();
+        nextToken = INT_LIT;
+        break;
+    case UNKNOWN:
+        lookup(nextChar);
+        getChar();
+        break;
+    case EOF:
+        nextToken = EOF;
+        lexeme = "EOF";
+        break;
+    }
+    std::cout << "Next token is: " << nextToken << ", Next lexeme is \"" << lexeme << "\"\n";
+    return nextToken;
+}
+
+void processInput() {
+    inputString = "sum = (a + b) * 42";
+    while (inputString.length() > 0) {
+        getChar();
+        if (!std::isspace(nextChar)) {
+            lex();
+        } else {
+            nextToken = SPACE_TK;
+            lexeme = nextChar;
+            std::cout << "Next token is: " << nextToken << ", Next lexeme is \"" << lexeme << "\"\n";
+        }
+    }
+    nextToken = EOF;
+    lexeme = "EOF";
+    std::cout << "Next token is: " << nextToken << ", Next lexeme is \"" << lexeme << "\"\n";
+}
+
+int main() {
+    processInput();
+    return 0;
+}
